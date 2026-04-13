@@ -1,0 +1,10 @@
+weight/
+runs_ckpt/
+ram/
+__pycache__/
+*.pyc
+*.pkl
+*.pt
+*.pth
+*.ckpt
+*.safetensors
