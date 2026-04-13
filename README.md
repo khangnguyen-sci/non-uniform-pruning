@@ -2,8 +2,6 @@
 
 Official implementation of our ICIP 2026 paper:
 
-**Resolution-Stage Non-Uniform Structural Channel Pruning for Diffusion-Based Real-World Image Super-Resolution**
-
 ## Overview
 
 We study resolution-dependent redundancy in the Stable Diffusion U-Net backbone for real-world image super-resolution (Real-ISR). Instead of applying uniform channel pruning across all layers, we introduce **stage-wise structured pruning aligned with encoder–decoder resolution symmetry**.
