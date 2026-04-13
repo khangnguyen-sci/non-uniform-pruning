@@ -105,7 +105,7 @@ Timing protocol:
 1000 averaged runs using CUDA events
 
 We report:
-
+Inference (Time)
 Parameters  
 MACs  
 U-Net latency (Time*)  
