@@ -114,4 +114,4 @@ End-to-end latency
 ---
 
 
-This work is still being update and will have an official web version for the compressed models.
+This work is still being updated and will have an official web version for the compressed models.
