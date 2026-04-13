@@ -13,10 +13,6 @@ from model import Net
 from ram.models.ram_lora import ram
 from torchvision import transforms
 from utils import add_lora_to_unet
-
-# -----------------------------
-# Distributed-safe init (Puhti)
-# -----------------------------
 def init_distributed_if_needed():
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     if world_size > 1:
@@ -26,16 +22,7 @@ def init_distributed_if_needed():
         rank = 0
     return rank, world_size
 
-# -----------------------------
-# sliced checkpoint loader
-# -----------------------------
 def load_checkpoint_sliced(model, ckpt_path: str):
-    """
-    Loads ckpt into model.
-    - Handles ckpt saved from DDP (module.xxx keys)
-    - Handles model being DDP or non-DDP
-    - If model tensor is smaller (structural pruning), slices checkpoint tensor.
-    """
     if not os.path.exists(ckpt_path):
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
 
@@ -45,7 +32,6 @@ def load_checkpoint_sliced(model, ckpt_path: str):
     loaded, skipped = 0, 0
 
     def candidates(k):
-        # Try exact, add/remove "module." as needed
         cands = [k]
         if k.startswith("module."):
             cands.append(k[len("module."):])
@@ -77,7 +63,6 @@ def load_checkpoint_sliced(model, ckpt_path: str):
     model.load_state_dict(tgt, strict=False)
     return loaded, skipped
 
-# -----------------------------
 # main
 # -----------------------------
 rank, world_size = init_distributed_if_needed()
@@ -90,7 +75,6 @@ parser.add_argument("--model_dir", type=str, default="weight")
 parser.add_argument("--log_dir", type=str, default="log")
 parser.add_argument("--save_interval", type=int, default=3)
 
-# Dataset override: your config.yml is flat and dataset uses ONLY dataroot_gt
 parser.add_argument("--dir_hr", type=str, required=True, help="DIV2K100/HR")
 parser.add_argument("--dir_lr", type=str, default=None, help="(Unused) LR folder; LR is synthesized by degrader")
 
@@ -107,7 +91,6 @@ torch.cuda.manual_seed_all(seed)
 
 config = OmegaConf.load("config.yml")
 
-# FIX: flat key override
 config.dataroot_gt = args.dir_hr
 if rank == 0:
     print("Override config.dataroot_gt (HR) ->", args.dir_hr)
@@ -190,7 +173,6 @@ unet_teacher.requires_grad_(False)
 decoder.requires_grad_(False)
 DAPE.requires_grad_(False)
 
-# Student (may be structurally pruned by model.py env vars)
 student = Net(unet, copy.deepcopy(decoder)).to(device)
 
 # DDP only if world_size > 1
