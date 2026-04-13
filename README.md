@@ -27,7 +27,7 @@ R0 → R1 → R2 → R3 → MID
 
 Instead of uniform pruning:
 
-R0 = R1 = R2 = R3 = RMID = 0.75
+R0 = R1 = R2 = R3 = RMID
 
 we apply resolution-aware pruning:
 
