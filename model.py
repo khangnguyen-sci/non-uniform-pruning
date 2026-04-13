@@ -27,11 +27,9 @@ from forward import (
     MyTransformer2DModel_SD_forward,
 )
 
-# SD2.1 base config (confirmed by your inspect)
 _SD_BASE = [320, 640, 1280, 1280]
-# Baseline AdcSR student is 0.75-uniform pruned
 _BASELINE_R = 0.75
-_BASELINE_C = [int(c * _BASELINE_R) for c in _SD_BASE]  # [240, 480, 960, 960]
+_BASELINE_C = [int(c * _BASELINE_R) for c in _SD_BASE]  
 
 
 def _get_ratio(name: str, default: float = 0.75) -> float:
@@ -137,7 +135,7 @@ def _prune_transformer2d(t2d: Transformer2DModel, c_new: int):
     if hasattr(t2d, "norm") and isinstance(t2d.norm, nn.GroupNorm):
         t2d.norm = _prune_groupnorm(t2d.norm, c_new)
 
-    # proj_in/proj_out (Linear in SD2.1; keep robust for Conv2d too)
+    # proj_in/proj_out
     if hasattr(t2d, "proj_in"):
         if isinstance(t2d.proj_in, nn.Linear):
             t2d.proj_in = _prune_linear(t2d.proj_in, c_new, c_new)
@@ -166,7 +164,6 @@ def _prune_transformer2d(t2d: Transformer2DModel, c_new: int):
                 if hasattr(attn, attr) and isinstance(getattr(attn, attr), nn.Linear):
                     setattr(attn, attr, _prune_linear(getattr(attn, attr), c_new, c_new))
 
-            # IMPORTANT: to_out in diffusers is commonly ModuleList([Linear, Dropout])
             if hasattr(attn, "to_out"):
                 to_out = attn.to_out
 
@@ -176,7 +173,6 @@ def _prune_transformer2d(t2d: Transformer2DModel, c_new: int):
                 elif isinstance(to_out, nn.Linear):
                     attn.to_out = _prune_linear(to_out, c_new, c_new)
 
-        # ff network dims are proportional to channels; infer multipliers from current shapes
         if hasattr(blk, "ff") and hasattr(blk.ff, "net") and isinstance(blk.ff.net, nn.ModuleList):
             if hasattr(blk.ff.net[0], "proj") and isinstance(blk.ff.net[0].proj, nn.Linear):
                 old = blk.ff.net[0].proj
@@ -206,7 +202,7 @@ def _channel_plan_from_env():
             "Changing it breaks conv_out->decoder.mid_block interface."
         )
 
-    c0 = int(_SD_BASE[0] * 0.75)  # fixed 240
+    c0 = int(_SD_BASE[0] * 0.75) 
     c1 = int(_SD_BASE[1] * r1)
     c2 = int(_SD_BASE[2] * r2)
     c3 = int(_SD_BASE[3] * r3)
@@ -217,7 +213,7 @@ def _channel_plan_from_env():
 
     if cm != c3:
         raise ValueError(
-            f"Pure pruning requires ADCSR_RMID == ADCSR_R3 (mid width must equal stage3). "
+            f"Pure pruning requires ADCSR_RMID == ADCSR_R3"
             f"Got CMID={cm}, C3={c3}."
         )
 
@@ -247,7 +243,6 @@ def _apply_stage_pruning(unet: nn.Module):
     for res in unet.mid_block.resnets:
         _prune_resnet_block(res, C3, C3)
 
-    # Skip stack matches forward.py
     skip_stack = [C0]
     skip_stack += [C0, C0] + [C0]
     skip_stack += [C1, C1] + [C1]
@@ -462,10 +457,10 @@ class Net(nn.Module):
         unet.apply(replace_forward_methods)
         unet.forward = types.MethodType(MyUNet2DConditionModel_SD_forward, unet)
 
-        # 1) baseline uniform prune (exactly like repo)
+        # 1) baseline uniform prune
         halve_channels(unet)
 
-        # 2) stage-wise extra pruning (only if env ratios < 0.75)
+        # 2) stage-wise extra pruning (ratios < 0.75)
         _apply_stage_pruning(unet)
 
         unet.body = nn.Sequential(
