@@ -85,9 +85,16 @@ datasets/DIV2K_Val
 
 Run:
 
-python test.py \
---LR_dir datasets/RealSR/LR \
---SR_dir results/RealSR
+## Download Weights
+
+```bash
+mkdir -p weights/baseline weights/R1_025 weights/R2_025 weights/R3_025 weights/decoder
+
+wget -O weights/baseline/baseline.pkl https://huggingface.co/augustitusss/non-uniform-pruning-weights/resolve/main/baseline/baseline.pkl
+wget -O weights/R1_025/R1_025.pkl https://huggingface.co/augustitusss/non-uniform-pruning-weights/resolve/main/R1_025/R1_025.pkl
+wget -O weights/R2_025/R2_025.pkl https://huggingface.co/augustitusss/non-uniform-pruning-weights/resolve/main/R2_025/R2_025.pkl
+wget -O weights/R3_025/R3_025.pkl https://huggingface.co/augustitusss/non-uniform-pruning-weights/resolve/main/R3_025/R3_025.pkl
+wget -O weights/decoder/halfDecoder.ckpt https://huggingface.co/augustitusss/non-uniform-pruning-weights/resolve/main/decoder/halfDecoder.ckpt
 
 ---
 
