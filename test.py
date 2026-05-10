@@ -72,7 +72,6 @@ def load_ckpt_flexible_sliced(model, ckpt_path: str):
             try:
                 tgt[k].copy_(src[slices])
             except Exception:
-                # if slicing still fails, skip
                 skipped += 1
                 continue
         loaded += 1
@@ -87,8 +86,8 @@ def set_env_if_not_none(k, v):
 
 
 parser = ArgumentParser()
-parser.add_argument("--epoch", type=int, default=200)
-parser.add_argument("--model_dir", type=str, default="weight")
+parser.add_argument("--ckpt_path", type=str, default="weights/R3_025/R3_025.pkl")
+parser.add_argument("--halfdecoder_path", type=str, default="weights/decoder/halfDecoder.ckpt")
 parser.add_argument("--LR_dir", type=str, default="testset/RealSR/LR")
 parser.add_argument("--HR_dir", type=str, default="testset/RealSR/HR")
 parser.add_argument("--SR_dir", type=str, default="result/RealSR")
@@ -129,7 +128,7 @@ pipe = StableDiffusionPipeline.from_pretrained(model_id).to(device)
 unet = pipe.unet
 
 from diffusers.models.autoencoders.vae import Decoder
-ckpt_halfdecoder = torch.load("./weight/pretrained/halfDecoder.ckpt", weights_only=False)
+ckpt_halfdecoder = torch.load(args.halfdecoder_path, weights_only=False, map_location="cpu")
 
 decoder = Decoder(
     in_channels=4,
@@ -151,9 +150,8 @@ decoder.load_state_dict(decoder_ckpt, strict=True)
 
 student = Net(unet, copy.deepcopy(decoder)).to(device)
 
-ckpt_path = os.path.join(args.model_dir, f"net_params_{args.epoch}.pkl")
-print("Loading ckpt:", ckpt_path)
-loaded, skipped = load_ckpt_flexible_sliced(student, ckpt_path)
+print("Loading ckpt:", args.ckpt_path)
+loaded, skipped = load_ckpt_flexible_sliced(student, args.ckpt_path)
 print(f"Loaded tensors: {loaded}, skipped: {skipped}")
 
 model = torch.nn.Sequential(
